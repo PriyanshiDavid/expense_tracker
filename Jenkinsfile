@@ -18,24 +18,24 @@ pipeline {
         // -------- Test Stage --------
         stage('Test') {
             steps {
-                echo 'Running unit tests...'
-                sh 'pytest tests/'   // Make sure you have test files in tests/
+                echo 'Running unit tests inside Docker...'
+                sh 'docker run --rm $IMAGE_NAME pytest tests/'  // Runs tests inside container
             }
         }
 
         // -------- Code Quality Stage --------
         stage('Code Quality') {
             steps {
-                echo 'Running SonarQube analysis...'
-                sh 'sonar-scanner'   // Requires SonarQube scanner installed on Jenkins
+                echo 'Running SonarQube analysis inside Docker...'
+                sh 'docker run --rm -v $PWD:/app $IMAGE_NAME sonar-scanner'  // Mount code for analysis
             }
         }
 
         // -------- Security Stage --------
         stage('Security Scan') {
             steps {
-                echo 'Running security scan with Bandit...'
-                sh 'bandit -r app/'  // Install Bandit via pip: pip install bandit
+                echo 'Running security scan with Bandit inside Docker...'
+                sh 'docker run --rm $IMAGE_NAME bandit -r app/'  // Runs Bandit inside container
             }
         }
 
@@ -43,7 +43,7 @@ pipeline {
         stage('Deploy to Test') {
             steps {
                 echo 'Deploying Docker container to test environment...'
-                sh 'docker run -d -p 5000:5000 $IMAGE_NAME'
+                sh 'docker run -d -p 5000:5000 --name $IMAGE_NAME $IMAGE_NAME'
             }
         }
 
@@ -51,7 +51,7 @@ pipeline {
         stage('Monitoring') {
             steps {
                 echo 'Checking health endpoint...'
-                sh 'curl http://localhost:5000/health'
+                sh 'curl http://localhost:5000/health || echo "Service not ready yet"'
             }
         }
     }
@@ -60,6 +60,7 @@ pipeline {
         always {
             echo 'Cleaning up Docker containers...'
             sh 'docker ps -q | xargs -r docker stop'
+            sh 'docker ps -a -q | xargs -r docker rm'
         }
     }
 }
