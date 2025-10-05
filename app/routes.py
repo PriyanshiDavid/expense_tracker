@@ -1,8 +1,8 @@
+# app/routes.py
+
 from flask import Blueprint, request, jsonify
-from app.models import Expense
-from app.database import db
-from models import Expense
-from database import db
+from .models import Expense  # ✅ relative import
+from .database import db      # ✅ relative import
 
 expense_bp = Blueprint('expense_bp', __name__)
 
