@@ -5,6 +5,7 @@ pipeline {
         CONTAINER_NAME = "expense-tracker"
     }
     stages {
+
         stage('Build') {
             steps {
                 echo 'Building Docker image...'
@@ -14,10 +15,14 @@ pipeline {
 
         stage('Test') {
             steps {
-                echo 'Running unit tests inside Docker (if tests exist)...'
+                echo 'Running unit tests inside Docker...'
                 sh '''
                 if [ -d tests ]; then
-                    docker run --rm -v $(pwd)/tests:/app/tests $IMAGE_NAME pytest /app/tests || true
+                    docker run --rm \
+                        -v $(pwd)/tests:/app/tests \
+                        -v $(pwd)/app:/app/app \
+                        $IMAGE_NAME \
+                        pytest /app/tests --disable-warnings -v
                 else
                     echo "No tests found, skipping pytest."
                 fi
@@ -55,8 +60,9 @@ pipeline {
             steps {
                 echo 'Deploying Docker container to test environment...'
                 sh '''
-                # Stop and remove previous container if it exists
-                if [ $(docker ps -aq -f name=$CONTAINER_NAME) ]; then
+                # Stop & remove previous container safely
+                CONTAINER=$(docker ps -aq -f name=$CONTAINER_NAME)
+                if [ "$CONTAINER" ]; then
                     docker stop $CONTAINER_NAME
                     docker rm $CONTAINER_NAME
                 fi
@@ -69,7 +75,7 @@ pipeline {
 
         stage('Monitoring') {
             steps {
-                echo 'Checking health endpoint (if app running)...'
+                echo 'Checking health endpoint...'
                 sh '''
                 echo "Waiting for Flask app to start..."
                 for i in {1..10}; do
@@ -89,7 +95,7 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up Docker containers safely...'
+            echo 'Cleaning up Docker containers...'
             sh '''
             docker ps -q --filter name=$CONTAINER_NAME | xargs -r docker stop
             docker ps -aq --filter name=$CONTAINER_NAME | xargs -r docker rm
