@@ -19,15 +19,14 @@ pipeline {
                 sh '''
                 if [ -d tests ]; then
                     docker run --rm \
-                        -v $(pwd)/tests:/app/tests \
-                        -v $(pwd)/app:/app/app \
+                        -v $(pwd):/app \
                         $IMAGE_NAME \
                         pytest /app/tests --disable-warnings -v
                 else
                     echo "No tests found, skipping pytest."
                 fi
                 '''
-            }
+                }
         }
 
         stage('Code Quality') {
@@ -103,3 +102,4 @@ pipeline {
         }
     }
 }
+
