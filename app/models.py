@@ -1,9 +1,10 @@
-from app.database import db
-from database import db
+# app/models.py
+
+from .database import db  # ✅ use relative import
 
 class Expense(db.Model):
     __tablename__ = 'expense'
-    __table_args__ = {'extend_existing': True}  # <--- add this line
+    __table_args__ = {'extend_existing': True}  # allows overriding table if exists
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
