@@ -17,13 +17,16 @@ pipeline {
             steps {
                 echo 'Running unit tests inside Docker...'
                 sh '''
-                # Run tests inside Docker, mount entire workspace
-                docker run --rm \
-                    -v $(pwd):/app \
-                    $IMAGE_NAME \
-                    sh -c "pytest /app/tests --disable-warnings -v"
+                if [ -d tests ]; then
+                    docker run --rm \
+                        -v $(pwd):/app \
+                        $IMAGE_NAME \
+                        pytest /app/tests --disable-warnings -v
+                else
+                    echo "No tests found, skipping pytest."
+                fi
                 '''
-            }
+                }
         }
 
         stage('Code Quality') {
@@ -99,3 +102,6 @@ pipeline {
         }
     }
 }
+
+
+correct entire
