@@ -1,8 +1,8 @@
+# app/__init__.py
+
 from flask import Flask
-from app.database import init_db
-from app.routes import expense_bp
-from database import init_db
-from routes import expense_bp
+from .database import init_db     # ✅ relative import
+from .routes import expense_bp    # ✅ relative import
 
 def create_app():
     app = Flask(__name__)
@@ -21,7 +21,7 @@ def create_app():
 
     return app
 
-
+# Only needed if running this file directly
 if __name__ == '__main__':
     app = create_app()
     app.run(host='0.0.0.0', port=5000, debug=True)
