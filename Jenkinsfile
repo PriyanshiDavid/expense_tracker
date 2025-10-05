@@ -54,7 +54,16 @@ pipeline {
         stage('Deploy to Test') {
             steps {
                 echo 'Deploying Docker container to test environment...'
-                sh 'docker run -d -p 5000:5000 --name $CONTAINER_NAME $IMAGE_NAME'
+                sh '''
+                # Stop and remove previous container if it exists
+                if [ $(docker ps -aq -f name=$CONTAINER_NAME) ]; then
+                    docker stop $CONTAINER_NAME
+                    docker rm $CONTAINER_NAME
+                fi
+
+                # Run new container
+                docker run -d -p 5000:5000 --name $CONTAINER_NAME $IMAGE_NAME
+                '''
             }
         }
 
@@ -81,8 +90,10 @@ pipeline {
     post {
         always {
             echo 'Cleaning up Docker containers safely...'
-            sh 'docker ps -q --filter name=$CONTAINER_NAME | xargs -r docker stop'
-            sh 'docker ps -aq --filter name=$CONTAINER_NAME | xargs -r docker rm'
+            sh '''
+            docker ps -q --filter name=$CONTAINER_NAME | xargs -r docker stop
+            docker ps -aq --filter name=$CONTAINER_NAME | xargs -r docker rm
+            '''
         }
     }
 }
